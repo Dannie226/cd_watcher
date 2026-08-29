@@ -20,22 +20,28 @@ Finally, perform all the configuration steps set forth in the following section.
 Most of the configuration steps have sensible defaults, but the credentials section
 cannot have a default.
 
-To run a deploy, push a tarball up to the configured deploy directory, and then run
+For the things that run user defined scripts, the scripts will be run using ```/usr/bin/bash```.
+If ```/usr/bin/bash``` isn't found, it will fall back to ```/usr/bin/sh```
+
+To run a deploy, push a bundle up to the configured deploy directory, and then run
 ```cd_watcher deploy```.<br>
-This scans the upload directory for any tarballs, decompresses them, puts them in
-the releases directory, and updates the symlink for the currently deployed server.
-Note: The tarballs are expected to be gzip compressed (created with tar -z)
+This scans the upload directory for any bundles, and runs the unpack script for
+each bundle it finds.<br>
+This unpack script gets run with the path to the bundle as the first argument.
+It also sets the working directory to the created release directory, so you
+can unpack the bundle here.<br>
+After the unpack script runs, the symlink for the currently deployed server gets
+updated.
 
-If multiple tarballs are found, they are decompressed and added as releases in the
-order that the go filesystem libraries find them. Only the last release is symlinked
-and health checked.
+If multiple bundles are found, the unpack script is run in the order the Go standard
+library returns the bundles in, but only the last one updates the symlink
 
-It then runs two user supplied scripts, if they exist:
- - Restart (must exist)
- - Health Check
+It then runs two user supplied scripts:
+ - Restart
+ - Health Check (optional)
 
 If either the health check script or the restart script returns an error code (exit
-code not equal to 0), then a rollback will automatically occur
+code not equal to 0), then a rollback will automatically occur.
 
 To run a rollback, just run ```cd_watcher rollback [number]```<br>
 This rolls back a specific number of versions, if previous versions exist
@@ -52,7 +58,8 @@ Example configuration files can be found in the examples directory
 
 It is recommended that you run this deploy unit as a separate user.<br>
 A pair of systemd unit files (one deploy, one rollback) with all of these
-parameters set can be found in the resources directory.
+parameters set can be found in the resources directory, with the email
+credential line commented out<br>
 
 By default, it is set to the "cd_watcher" user, but that can be changed.
 
@@ -91,7 +98,12 @@ This is the symlink that gets automatically updated.
 #### Upload Directory
 
 ```"upload_dir"```<br>
-Where are the tarballs going to be deployed to. Default: ```"uploads"```
+Where are the bundles going to be deployed to. Default: ```"uploads"```
+
+#### Unpack Script
+
+```"unpack"```<br>
+The script to run to unpack the bundle. Default: ```"scripts/unpack.sh"```
 
 #### Reload Script
 
@@ -108,8 +120,8 @@ Note: An empty string here means that the health check shouldn't be run
 
 ```"email_conf"```<br>
 Object defining configuration for emails. Default ```null```<br>
-Note: ```null ``` means that no emails will be sent for deploys. More information on
-email configuration in the next section
+Note: ```null ``` means that no emails will be sent. More information on email
+configuration in the next section
 
 ## Email Configuration
 
@@ -129,6 +141,9 @@ There are 5 main events that you can listen to with emails:
  - Rollback finished (```"rollback_finish"```)
  - Health check failed (```"health_check_fail"```)
 
+Finish emails will reply to their corresponding start email, new start
+emails reply to the previous start email.
+
 ### Email Host
 
 ```"host"```<br>
@@ -144,7 +159,7 @@ Note: No default value. Login info must be valid to send emails as the emailer.
 ### Login
 
 ```"login"```<br>
-Login type used for the server.<br>
+String value login type used for the server. "anonymous", "external", "oauth", or "plain"<br>
 Note: No default value. Email client will authenticate the connection with
 the SMTP server, so provide credentials. This is where the email_parameters
 credential comes in.<br>
