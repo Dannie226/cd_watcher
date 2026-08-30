@@ -1,9 +1,6 @@
 package main
 
 import (
-	"context"
-	"errors"
-	"fmt"
 	"log/slog"
 	"os"
 	"strings"
@@ -12,97 +9,70 @@ import (
 	"github.com/Dannie226/cd_watcher/internal/email"
 	"github.com/Dannie226/cd_watcher/internal/release"
 	"github.com/Dannie226/cd_watcher/internal/unpack"
-	"github.com/jackc/pgx/v5"
 )
 
-func deploy() int {
-	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{})
-	logger := slog.New(handler)
-	slog.SetDefault(logger)
-
-	cfg, err := config.LoadConfig()
+func deploy(cfg *config.Config, client *email.EmailClient) int {
+	buf := strings.Builder{}
+	bundles, err := os.ReadDir(cfg.UploadDir)
 
 	if err != nil {
-		slog.Error("Failed to load config", "error", err)
+		slog.Error("Failed to list upload directory", "error", err)
 		return 1
 	}
 
-	credDir, ok := os.LookupEnv("CREDENTIALS_DIR")
-
-	if !ok {
-		slog.Error("No credentials directory environment variable")
-
-		// For now, not exiting, just going to set it to a local value for testing
-		// os.Exit(1)
-		credDir = "./creds"
+	if len(bundles) == 0 {
+		slog.Info("No Bundles found")
+		return 0
 	}
 
-	dbUrl, err := os.ReadFile(fmt.Sprintf("%s/pg_url", credDir))
+	buf.WriteString("Starting Deploy\nFound Bundles:")
+
+	for _, b := range bundles {
+		buf.WriteRune('\n')
+		buf.WriteString(b.Name())
+	}
+
+	err = client.SendEmail(config.DeployStartEvent, buf.String())
 
 	if err != nil {
-		slog.Error("Failed to read postgres database url", "error", err)
-		return 1
+		slog.Warn("Failed to send deploy start email", "error", err)
 	}
 
-	pgUrl := strings.TrimSpace(string(dbUrl))
-
-	emailConn, err := pgx.Connect(context.Background(), pgUrl)
+	slog.Info("Unpacking bundles")
+	lastRelease, err := unpack.UnpackBundles(
+		cfg.UploadDir,
+		cfg.ReleaseDir,
+		cfg.UnpackScript,
+		bundles,
+		cfg.VersionConn,
+	)
 
 	if err != nil {
-		slog.Error("Failed to create email database connection", "error", err)
-		return 1
-	}
-	defer emailConn.Close(context.Background())
-
-	var client *email.EmailClient
-
-	if cfg.EmailConfig != nil {
-		client, err = email.NewClient(cfg.EmailConfig, credDir, emailConn)
+		slog.Error("Failed to unpack bundles", "error", err)
+		err = client.SendEmail(config.DeployFinishEvent, "Failed to unpack deploy bundles")
 
 		if err != nil {
-			slog.Error("Failed to create email client", "error", err)
-			return 1
+			slog.Warn("Failed to send deploy error email", "error", err)
 		}
-	}
 
-	uploadConn, err := pgx.Connect(context.Background(), pgUrl)
-
-	if err != nil {
-		slog.Error("Failed to create upload database connection", "error", err)
 		return 1
 	}
 
-	defer uploadConn.Close(context.Background())
-
-	client.SendEmail(config.DeployStartEvent, "Starting deploy")
-
-	lastRelease, err := unpack.UnpackBundles(cfg.UploadDir, cfg.ReleaseDir, cfg.UnpackScript, uploadConn)
-
-	if err != nil {
-		if errors.Is(err, unpack.ErrNoBundles) {
-			slog.Info(err.Error())
-			err := client.SendEmail(config.DeployFinishEvent, "No bundles were found for deploying")
-
-			if err != nil {
-				slog.Error("Failed to send deploy finish email", "error", err)
-				return 1
-			}
-
-			return 0
-		}
-
-		slog.Error("Failed to unpack bundles", "error", err)
-		client.SendEmail(config.DeployFinishEvent, "Failed to unpack deploy bundles")
-		return 1
-	}
-
+	slog.Info("Setting up release", "final release", lastRelease)
 	err = release.SetupRelease(cfg.ReleaseDir, lastRelease, cfg.ReloadScript, cfg.HealthScript)
 
 	if err != nil {
 		slog.Error("Failed to set up new release", "error", err)
-		client.SendEmail(config.DeployFinishEvent, "Failed to restart server")
+		err = client.SendEmail(config.DeployFinishEvent, "Failed to restart server")
+
+		if err != nil {
+			slog.Warn("Failed to send deploy restart email", "error", err)
+		}
+
 		return 1
 	}
+
+	err = client.SendEmail(config.DeployFinishEvent, "Deployed new server")
 
 	return 0
 }

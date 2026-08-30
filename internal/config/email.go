@@ -44,11 +44,18 @@ func (l *loginType) UnmarshalJSON(b []byte) error {
 }
 
 const (
-	DeployStartEvent     EmailEvent = 1 << 0
-	DeployFinishEvent    EmailEvent = 1 << 2
-	RollbackStartEvent   EmailEvent = 1 << 4
-	RollbackFinishEvent  EmailEvent = 1 << 6
-	HealthCheckFailEvent EmailEvent = 1 << 8
+	DeployStartEvent    EmailEvent = 1 << 0
+	DeployFinishEvent   EmailEvent = 1 << 2
+	RollbackStartEvent  EmailEvent = 1 << 4
+	RollbackFinishEvent EmailEvent = 1 << 6
+)
+
+const (
+	AllEvent      EmailEvent = DeployStartEvent | DeployFinishEvent | RollbackStartEvent | RollbackFinishEvent
+	StartEvent    EmailEvent = DeployStartEvent | RollbackStartEvent
+	FinishEvent   EmailEvent = DeployFinishEvent | RollbackFinishEvent
+	DeployEvent   EmailEvent = DeployStartEvent | DeployFinishEvent
+	RollbackEvent EmailEvent = RollbackStartEvent | RollbackFinishEvent
 )
 
 type eventStruct struct {
@@ -80,8 +87,20 @@ func (e *EmailEvent) UnmarshalJSON(b []byte) error {
 		case "rollback_finish":
 			bit = int(RollbackFinishEvent)
 
-		case "health_check_fail":
-			bit = int(HealthCheckFailEvent)
+		case "all":
+			bit = int(AllEvent)
+
+		case "start":
+			bit = int(StartEvent)
+
+		case "finish":
+			bit = int(FinishEvent)
+
+		case "deploy":
+			bit = int(DeployEvent)
+
+		case "rollback":
+			bit = int(RollbackEvent)
 
 		default:
 			return fmt.Errorf("Unknown email event: %s", ev.Name)
@@ -105,6 +124,19 @@ func (e EmailEvent) RecievesEmail(ev EmailEvent) bool {
 
 func (e EmailEvent) IsBCC(ev EmailEvent) bool {
 	return e&(ev<<1) != 0
+}
+
+func (e EmailEvent) SubjectLine() string {
+	switch {
+	case e&DeployEvent != 0:
+		return "Geopolitics Deploy"
+
+	case e&RollbackEvent != 0:
+		return "Geopolitics Rollback"
+
+	default:
+		return "Unknown email event"
+	}
 }
 
 func (e EmailEvent) String() string {
@@ -155,31 +187,20 @@ func (e EmailEvent) String() string {
 		}
 	}
 
-	if e&HealthCheckFailEvent != 0 {
-		if buf.Len() > 1 {
-			buf.WriteString(", ")
-		}
-
-		buf.WriteString("health_check_fail")
-
-		if e&(HealthCheckFailEvent<<1) != 0 {
-			buf.WriteString(" (BCC'd)")
-		}
-	}
-
 	buf.WriteRune(']')
 
 	return buf.String()
 }
 
 type EmailRecipient struct {
-	Email  string `json:"email"`
-	Events EmailEvent
+	Email  string     `json:"email"`
+	Events EmailEvent `json:"events"`
 }
 
 type EmailConfig struct {
-	Host       string           `json:"host"`
-	Emailer    string           `json:"emailer"`
-	LoginType  loginType        `json:"login"`
-	Recipients []EmailRecipient `json: "recipients"`
+	Host        string           `json:"host"`
+	Emailer     string           `json:"emailer"`
+	MsgIDDomain string           `json:"message-id-domain"`
+	LoginType   loginType        `json:"login"`
+	Recipients  []EmailRecipient `json:"recipients"`
 }

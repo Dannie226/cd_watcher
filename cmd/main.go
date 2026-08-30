@@ -1,9 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"os"
+
 	"strconv"
+
+	"github.com/Dannie226/cd_watcher/internal/config"
+	"github.com/Dannie226/cd_watcher/internal/email"
 )
 
 func main() {
@@ -12,23 +18,50 @@ func main() {
 		return
 	}
 
+	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{})
+	logger := slog.New(handler)
+	slog.SetDefault(logger)
+
+	cfg, err := config.LoadConfig()
+
+	if err != nil {
+		slog.Error("Failed to load config", "error", err)
+		os.Exit(1)
+	}
+
+	var client *email.EmailClient
+
+	if cfg.EmailConfig != nil {
+		client = email.NewClient(cfg.EmailConfig, cfg.EmailLogin, cfg.EmailConn)
+	}
+
 	switch os.Args[1] {
 	case "deploy":
-		os.Exit(deploy())
+		ret := deploy(cfg, client)
+
+		cfg.EmailConn.Close(context.Background())
+		cfg.VersionConn.Close(context.Background())
+
+		os.Exit(ret)
 
 	case "rollback":
 		if len(os.Args) < 3 {
-			fmt.Println("Rollback command must have a numeric argument")
+			fmt.Println("Rollback command must have a positive numeric argument")
 			os.Exit(1)
 		}
 
 		num, err := strconv.Atoi(os.Args[2])
 
-		if err != nil {
-			fmt.Println("Rollback command argument must be a number")
+		if err != nil || num <= 0 {
+			fmt.Println("Rollback command argument must be a positive number")
 			os.Exit(1)
 		}
 
-		os.Exit(rollback(num))
+		ret := rollback(cfg, client, num)
+
+		cfg.EmailConn.Close(context.Background())
+		cfg.VersionConn.Close(context.Background())
+
+		os.Exit(ret)
 	}
 }
