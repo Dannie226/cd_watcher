@@ -1,0 +1,20 @@
+{
+    "health_check": "./scripts/health_check.sh",
+    "email_conf": {
+        "host": "smtp.gmail.com:587",
+        "emailer": "yoursenderemail@gmail.com",
+        "message-id-domain": "mail.gmail.com",
+        "login": "plain",
+        "recipients": [
+            {
+                "email": "yourwatcheremail@gmail.com",
+                "events": [
+                    {
+                        "name": "all",
+                        "bcc": false
+                    }
+                ]
+            }
+        ]
+    }
+}

@@ -1,0 +1,1 @@
+postgres://cd_watcher:supersecretpassword@your.database.com:5432/cd_database
