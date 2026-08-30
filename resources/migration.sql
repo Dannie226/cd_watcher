@@ -1,9 +1,8 @@
 create table versions (
     id bigserial primary key,
-    filename text not null,
-    foldername text not null
+    foldername char(32) not null,
 
-    unique (filename)
+    unique (foldername)
 );
 
 create table emails (
@@ -11,3 +10,5 @@ create table emails (
     mainID text,
     chainID text
 );
+
+insert into emails (event) values (1), (2);
