@@ -11,7 +11,7 @@ little as possible.<br>
 General, run of the mill basic configuration.<br>
 Only sends emails to one person from one email address.
 
-## Multirecv
+## Multiple Receivers (multirecv)
 
 Slightly more complex configuration where you are sending emails
 to two people, one who recieves all emails, and one who only recieves
