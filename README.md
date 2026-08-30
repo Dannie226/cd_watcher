@@ -21,7 +21,6 @@ Most of the configuration steps have sensible defaults, but the credentials sect
 cannot have a default.
 
 For the things that run user defined scripts, the scripts will be run using ```/usr/bin/bash```.
-If ```/usr/bin/bash``` isn't found, it will fall back to ```/usr/bin/sh```
 
 To run a deploy, push a bundle up to the configured deploy directory, and then run
 ```cd_watcher deploy```.<br>
