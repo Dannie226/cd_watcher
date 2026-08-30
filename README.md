@@ -80,7 +80,7 @@ resources directory.
 
 All things in this section need to be [systemd credentials](https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html?__goaway_challenge=meta-refresh&__goaway_id=3c45b19eb29e9844aecce3a903c65bfd&__goaway_referer=https%3A%2F%2Fsystemd.io%2F#LoadCredential=ID:PATH).
  - pg_url: URL for the database connection. Always necessary.
- - email_parameters: JSON blob of data for configured email login type. Only necessary if
+ - email_login: JSON blob of data for configured email login type. Only necessary if
 email configuration is not null
 
 ### JSON
@@ -134,15 +134,26 @@ for more information about some of the configuration options
 
 ### Email Events
 
-There are 5 main events that you can listen to with emails:
+There are 4 main events that you can listen to with emails:
  - Deploy started (```"deploy_start"```)
  - Deploy finished (```"deploy_finish"```)
  - Rollback started (```"rollback_start"```)
  - Rollback finished (```"rollback_finish"```)
- - Health check failed (```"health_check_fail"```)
 
 Finish emails will reply to their corresponding start email, new start
-emails reply to the previous start email.
+emails reply to the previous start email.<br>
+If something went wrong (health check fail, other error) a finish email
+will still be sent, it will just contain information about an error<br>
+
+There are 5 pseudo-events you can listen to, that are just combinations
+of the 4 main events:
+ - All (```"all"```)
+ - Started (```"start"```)
+ - Finished (```"finish"```)
+ - Deploy (```"deploy"```)
+ - Rollback (```"rollback"```)
+
+It should be pretty obvious which events those all correlate to
 
 ### Email Host
 
@@ -155,6 +166,13 @@ emails, so choose an SMTP port you can use TLS over
 ```"emailer"```<br>
 String defining the email address of the sender of the emails.<br>
 Note: No default value. Login info must be valid to send emails as the emailer.
+
+### Message ID Domain
+```"message_id_domain"```<br>
+String defining the domain of the message id for emails.<br>
+Note: No default value. Domain must be valid for the emailer.
+Message IDs are generated from the timestamp, and 36 bytes of
+entropy. They are almost certainly guaranteed to be unique.<br>
 
 ### Login
 
