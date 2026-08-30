@@ -200,7 +200,7 @@ type EmailRecipient struct {
 type EmailConfig struct {
 	Host        string           `json:"host"`
 	Emailer     string           `json:"emailer"`
-	MsgIDDomain string           `json:"message-id-domain"`
+	MsgIDDomain string           `json:"message_id_domain"`
 	LoginType   loginType        `json:"login"`
 	Recipients  []EmailRecipient `json:"recipients"`
 }

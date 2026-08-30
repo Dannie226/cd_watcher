@@ -3,7 +3,7 @@
     "email_conf": {
         "host": "smtp.gmail.com:587",
         "emailer": "yoursenderemail@gmail.com",
-        "message-id-domain": "mail.gmail.com",
+        "message_id_domain": "mail.gmail.com",
         "login": "plain",
         "recipients": [
             {
