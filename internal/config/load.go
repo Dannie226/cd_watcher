@@ -117,8 +117,14 @@ func LoadConfig() (*Config, error) {
 
 	var l sasl.Client
 
+	loginFile := os.Getenv("EMAIL_LOGIN_NAME")
+
+	if loginFile == "" {
+		loginFile = "email_login"
+	}
+
 	if cfg.EmailConfig != nil {
-		params, err := os.ReadFile(filepath.Join(credDir, "email_login"))
+		params, err := os.ReadFile(filepath.Join(credDir, loginFile))
 
 		if err != nil {
 			return nil, fmt.Errorf("Failed to read email login parameters: %w", err)
@@ -135,7 +141,13 @@ func LoadConfig() (*Config, error) {
 
 	cfg.EmailLogin = l
 
-	url, err := os.ReadFile(filepath.Join(credDir, "pg_url"))
+	urlFile := os.Getenv("PG_URL_NAME")
+
+	if urlFile == "" {
+		urlFile = "pg_url"
+	}
+
+	url, err := os.ReadFile(filepath.Join(credDir, urlFile))
 
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read database url: %w", err)

@@ -97,6 +97,22 @@ All things in this section need to be [systemd credentials](https://www.freedesk
  - email_login: JSON blob of data for configured email login type. Only necessary if
 email configuration is not null
 
+These credentials will be read using two environment variables:
+ - PG_URL_NAME: the name of the credential file that pg_url will be read from
+ - EMAIL_LOGIN_NAME: the name of the credential file that email_login will be read from
+
+You shouldn't put the credential directory in front, that will be appended in the
+program itself.<br>
+If the environment variables are empty (or unset), it will assume that the credentials
+are just named 'pg_url' and 'email_login'
+
+The environment variables are as necessary as their corresponding credentials.<br>
+You might ask "Why put the credential name in an environment variable?"<br>
+Great Question. Because the way systemd works is that when you create the credential,
+it puts an ID with that credential. But, you might want to put a file extension with
+the credential, which will then mess with the ID. So, you get to decide the ID and other
+stuff and just tell the program which file to read.<br>
+
 ### JSON
 
 You must put a ```config.json``` file in the working directory of the watcher.
