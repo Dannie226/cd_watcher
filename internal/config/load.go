@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json/v2"
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/emersion/go-sasl"
 	"github.com/jackc/pgx/v5"
@@ -143,13 +143,19 @@ func LoadConfig() (*Config, error) {
 
 	pgUrl := strings.TrimSpace(string(url))
 
-	eConn, err := pgx.Connect(context.Background(), pgUrl)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+
+	eConn, err := pgx.Connect(ctx, pgUrl)
+	cancel()
 
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create email database connection: %w", err)
 	}
 
-	vConn, err := pgx.Connect(context.Background(), pgUrl)
+	ctx, cancel = context.WithTimeout(context.Background(), 20*time.Second)
+
+	vConn, err := pgx.Connect(ctx, pgUrl)
+	cancel()
 
 	if err != nil {
 		eConn.Close(context.Background())
