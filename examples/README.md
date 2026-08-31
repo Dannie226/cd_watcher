@@ -16,3 +16,11 @@ Only sends emails to one person from one email address.
 Slightly more complex configuration where you are sending emails
 to two people, one who recieves all emails, and one who only recieves
 start emails.
+
+## Credentials (creds)
+
+Configuration showing how you can set the names of the creds to be
+different. The included unit files are different and set the right
+variables to allow you to have the different, listed, credential names
+The creds subdirectory (inside the creds example) also has the renamed
+credentials.

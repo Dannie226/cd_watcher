@@ -1,0 +1,13 @@
+[Unit]
+Description="Continuous Delivery Deploy Unit File"
+Documentation="https://github.com/Dannie226/cd_watcher"
+
+[Service]
+Type=oneshot
+User=cd_watcher
+WorkingDirectory=/home/cd_watcher
+ExecStart=/usr/bin/flock --exclusive --close /home/cd_watcher/.deployment.lock /home/cd_watcher/bin/cd_watcher deploy
+LoadCredentialEncrypted=pg_url.cred
+Environment=PG_URL_NAME=pg_url.cred
+# LoadCredentialEncrypted=email_login
+# Environment=EMAIL_LOGIN_NAME=email_login.cred
