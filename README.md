@@ -45,7 +45,9 @@ code not equal to 0), then a rollback will automatically occur.
 To run a rollback, just run ```cd_watcher rollback [number]```<br>
 This rolls back a specific number of versions, if previous versions exist
 and clears entries in the releases directory and database, updates the symlink
-for the currently deployed server, and then restarts and health checks the server.
+for the currently deployed server, and then restarts and health checks the server.<br>
+If there aren't enough versions to roll back through, it will roll back as many as it
+can. So, if you have 5 versions, and run rollback 10, it will rollback 4 versions.
 
 ## Examples
 
