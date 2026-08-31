@@ -18,6 +18,11 @@ func main() {
 		return
 	}
 
+	if os.Args[1] != "deploy" && os.Args[1] != "rollback" {
+		usage()
+		os.Exit(1)
+	}
+
 	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{})
 	logger := slog.New(handler)
 	slog.SetDefault(logger)
