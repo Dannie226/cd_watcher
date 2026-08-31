@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log/slog"
 	"os"
 	"strings"
@@ -62,6 +63,40 @@ func deploy(cfg *config.Config, client *email.EmailClient) int {
 	err = release.SetupRelease(cfg.ReleaseDir, lastRelease, cfg.ReloadScript, cfg.HealthScript)
 
 	if err != nil {
+		if errors.Is(err, release.RestartErr) {
+			slog.Error("Failed restart", "error", err)
+			err = client.SendEmail(config.DeployFinishEvent, "Restart failed")
+
+			if err != nil {
+				slog.Warn("Failed to send restart failure email", "error", err)
+			}
+
+			rollbackRet := rollback(cfg, client, 1)
+
+			if rollbackRet == 1 {
+				slog.Error("Automatic rollback Failed")
+			}
+
+			return 1
+		}
+
+		if errors.Is(err, release.HealthCheckErr) {
+			slog.Error("Failed health check", "error", err)
+			err = client.SendEmail(config.DeployFinishEvent, "Health check failed")
+
+			if err != nil {
+				slog.Warn("Failed to send health check failure email", "error", err)
+			}
+
+			rollbackRet := rollback(cfg, client, 1)
+
+			if rollbackRet == 1 {
+				slog.Error("Automatic rollback Failed")
+			}
+
+			return 1
+		}
+
 		slog.Error("Failed to set up new release", "error", err)
 		err = client.SendEmail(config.DeployFinishEvent, "Failed to restart server")
 
