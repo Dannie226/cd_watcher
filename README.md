@@ -4,10 +4,11 @@ A single binary for performing the CD part of a CI/CD pipeline
 ## Dependencies
 
 This depends on systemd credentials, and must be installed as a systemd service.
-There is a provided systemd service file.
+There is are a pair of provided systemd service files, one for deploy, one for
+rollback.
 
 This also depends on having a PostgreSQL database for storing versioning information.
-A schema sql file is also provided.
+A schema SQL file is also provided.
 
 ## How do I use this
 
@@ -17,8 +18,8 @@ adding other parameters for your deploy environment.
 Next, push the binary up to the server you are using, along-side the systemd service files.
 
 Finally, perform all the configuration steps set forth in the following section.
-Most of the configuration steps have sensible defaults, but the credentials section
-cannot have a default.
+Most of the configuration steps have sensible defaults, but many things don't,
+so make sure you set those up.
 
 To run a deploy, push a bundle up to the configured deploy directory, and then run
 ```cd_watcher deploy```.<br>
@@ -26,12 +27,13 @@ This scans the upload directory for any bundles, and runs the unpack script for
 each bundle it finds.<br>
 This unpack script gets run with the path to the bundle as the first argument.
 It also sets the working directory to the created release directory, so you
-can unpack the bundle here.<br>
+can unpack the bundle here in the current directory.<br>
 After the unpack script runs, the symlink for the currently deployed server gets
 updated.
 
 If multiple bundles are found, the unpack script is run in the order the Go standard
-library returns the bundles in, but only the last one updates the symlink
+library returns the bundles in, but only the last one updates the symlink and gets
+the restart and health check.
 
 It then runs two user supplied scripts:
  - Restart
@@ -104,9 +106,8 @@ These credentials will be read using two environment variables:
 You shouldn't put the credential directory in front, that will be appended in the
 program itself.<br>
 If the environment variables are empty (or unset), it will assume that the credentials
-are just named 'pg_url' and 'email_login'
+are just named 'pg_url' and 'email_login'<br>
 
-The environment variables are as necessary as their corresponding credentials.<br>
 You might ask "Why put the credential name in an environment variable?"<br>
 Great Question. Because the way systemd works is that when you create the credential,
 it puts an ID with that credential. But, you might want to put a file extension with
@@ -121,19 +122,20 @@ All paths are relative to the working directory.
 #### Releases Directory
 
 ```"release_dir"```<br>
-Where are the releases going to go. Default: ```"releases"```<br>
+Where the releases are going to go. Default: ```"releases"```<br>
 Note: Within the releases directory, there will be a symlink called ```current```.
 This is the symlink that gets automatically updated.
 
 #### Upload Directory
 
 ```"upload_dir"```<br>
-Where are the bundles going to be deployed to. Default: ```"uploads"```
+Where the bundles are going to be deployed to. Default: ```"uploads"```
 
 #### Unpack Script
 
 ```"unpack"```<br>
 The script to run to unpack the bundle. Default: ```"scripts/unpack.sh"```
+Note: Will be run with its first argument being the path to the bundle
 
 #### Reload Script
 
@@ -157,7 +159,8 @@ configuration in the next section
 
 Having some level of observability into what is happening is nice, so emails will get
 sent out based on what is going on. It also handles threading automatically, so you won't
-get 50 disparate emails, everything will just be in one email chain with replies baked in.
+get 50 disparate emails, everything will just be in a few email chains with all the replies
+baked in. There are two separate email chains, one for deploys, one for rollbacks.<br>
 
 Under the hood, this uses [go-smtp](github.com/emersion/go-smtp), so you can check that out
 for more information about some of the configuration options
