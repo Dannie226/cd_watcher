@@ -14,13 +14,11 @@ A schema sql file is also provided.
 First, clone the repo and build the binary using ```go build -o cd_watcher ./cmd```, possibly
 adding other parameters for your deploy environment.
 
-Next, push the binary up to the server you are using, along-side the systemd service file.
+Next, push the binary up to the server you are using, along-side the systemd service files.
 
 Finally, perform all the configuration steps set forth in the following section.
 Most of the configuration steps have sensible defaults, but the credentials section
 cannot have a default.
-
-For the things that run user defined scripts, the scripts will be run using ```/usr/bin/bash```.
 
 To run a deploy, push a bundle up to the configured deploy directory, and then run
 ```cd_watcher deploy```.<br>
@@ -51,6 +49,20 @@ for the currently deployed server, and then restarts and health checks the serve
 
 Example configuration files can be found in the examples directory
 
+## Scripts
+
+There are a few user defined scripts for this project that makes it nice and
+configurable, but there are a few restrictions for the scripts.
+
+1. All scripts are run using ```/usr/bin/bash```
+2. Keep script lines short. If output lines are excessively long, the entirety of
+the command output could be thrown away
+3. Script stdout and stderr is logged for revisiting if things break. Don't output
+credentials or anything you wish to keep secret
+4. The running waits for stdout and stderr to be closed. That means if you spawn a
+background process but still pipe to stdout or stderr, the main process will wait
+for those background processes to finish.
+
 ## Configuration
 
 ### Unit File
@@ -64,6 +76,9 @@ By default, it is set to the "cd_watcher" user, but that can be changed.
 
 Similarly, the default working directory is the default home directory of
 the "cd_watcher" user (/home/cd_watcher). Once again, this can be changed.
+
+The unit files also have a file lock by default so if something is happening,
+then another service starting will wait until the first service finishes
 
 Finally, the path of the binary is set to be "/home/cd_watcher/bin/cd_watcher"
 but this can be changed as well.
@@ -90,7 +105,7 @@ All paths are relative to the working directory.
 #### Releases Directory
 
 ```"release_dir"```<br>
-Where are the releases going to go. Default: ```"releases"```
+Where are the releases going to go. Default: ```"releases"```<br>
 Note: Within the releases directory, there will be a symlink called ```current```.
 This is the symlink that gets automatically updated.
 
@@ -119,7 +134,7 @@ Note: An empty string here means that the health check shouldn't be run
 
 ```"email_conf"```<br>
 Object defining configuration for emails. Default ```null```<br>
-Note: ```null ``` means that no emails will be sent. More information on email
+Note: ```null``` means that no emails will be sent. More information on email
 configuration in the next section
 
 ## Email Configuration
@@ -142,7 +157,7 @@ There are 4 main events that you can listen to with emails:
 Finish emails will reply to their corresponding start email, new start
 emails reply to the previous start email.<br>
 If something went wrong (health check fail, other error) a finish email
-will still be sent, it will just contain information about an error<br>
+will still be sent, it will just say there was an error<br>
 
 There are 5 pseudo-events you can listen to, that are just combinations
 of the 4 main events:
@@ -152,7 +167,9 @@ of the 4 main events:
  - Deploy (```"deploy"```)
  - Rollback (```"rollback"```)
 
-It should be pretty obvious which events those all correlate to
+It should be pretty obvious which events those all correlate to.<br>
+These exist so you don't have to specify each command separately with
+the same BCC rules
 
 ### Email Host
 
@@ -178,7 +195,7 @@ entropy. They are almost certainly guaranteed to be unique.<br>
 ```"login"```<br>
 String value login type used for the server. "anonymous", "external", "oauth", or "plain"<br>
 Note: No default value. Email client will authenticate the connection with
-the SMTP server, so provide credentials. This is where the email_parameters
+the SMTP server, so provide credentials. This is where the email_login
 credential comes in.<br>
 Under each heading will be a list of parameters that must be in the parameters
 JSON blob<br>
