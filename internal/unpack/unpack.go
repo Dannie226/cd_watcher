@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"os/exec"
 	"path/filepath"
 
+	"github.com/Dannie226/cd_watcher/internal/command"
 	"github.com/Dannie226/cd_watcher/internal/queries"
 	"github.com/jackc/pgx/v5"
 )
@@ -57,15 +57,17 @@ func UnpackBundles(uploadDir, releaseDir, unpackScript string, bundles []os.DirE
 			return "", fmt.Errorf("Failed to create release directory for \"%s\": %w", e.Name(), err)
 		}
 
-		cmd := exec.Command("/usr/bin/bash", relUnpack, relEntry)
-
-		cmd.Dir = absRelease
-
-		if err := cmd.Run(); err != nil {
+		if err := command.RunCommand(
+			"/usr/bin/bash",
+			absRelease,
+			"Unpack",
+			relUnpack,
+			relEntry,
+		); err != nil {
 			return "", fmt.Errorf("Failed to run unpack script on \"%s\": %w", e.Name(), err)
 		}
 
-		queries.InsertNewVersion(uploadConn, queries.VersionInfo{
+		err = queries.InsertNewVersion(uploadConn, queries.VersionInfo{
 			ID:         id,
 			FolderName: relName,
 		})
