@@ -1,14 +1,12 @@
 package queries
 
 import (
-	"context"
-
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func GetMaxVersionID(conn *pgx.Conn) (pgtype.Int8, error) {
-	row := conn.QueryRow(context.Background(), "select max(id) from versions;")
+	row := conn.QueryRow(getTimeoutContext(), "select max(id) from versions;")
 
 	var id pgtype.Int8
 	err := row.Scan(&id)

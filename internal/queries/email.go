@@ -1,7 +1,6 @@
 package queries
 
 import (
-	"context"
 	"errors"
 	"fmt"
 
@@ -33,7 +32,7 @@ func GetEmailChainIDs(conn *pgx.Conn, event config.EmailEvent) (EmailIds, error)
 		return EmailIds{}, ErrUnknownEvent
 	}
 
-	row := conn.QueryRow(context.Background(), "select mainId, chainId from emails where event=$1", ids.Event)
+	row := conn.QueryRow(getTimeoutContext(), "select mainId, chainId from emails where event=$1", ids.Event)
 
 	if err := row.Scan(
 		&ids.Main,
@@ -50,7 +49,7 @@ func SetEmailChainIDs(conn *pgx.Conn, ids EmailIds) error {
 		return ErrUnknownEvent
 	}
 
-	_, err := conn.Exec(context.Background(), "update emails set mainId=$1, chainId=$2 where event=$3", ids.Main, ids.Chain, ids.Event)
+	_, err := conn.Exec(getTimeoutContext(), "update emails set mainId=$1, chainId=$2 where event=$3", ids.Main, ids.Chain, ids.Event)
 
 	return err
 }

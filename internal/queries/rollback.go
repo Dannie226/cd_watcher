@@ -1,14 +1,12 @@
 package queries
 
 import (
-	"context"
-
 	"github.com/jackc/pgx/v5"
 )
 
 func GetLastVersions(conn *pgx.Conn, n int) ([]VersionInfo, error) {
 	rows, err := conn.Query(
-		context.Background(),
+		getTimeoutContext(),
 		"select id, foldername from versions order by id desc limit $1",
 		n,
 	)
@@ -43,7 +41,7 @@ func GetLastVersions(conn *pgx.Conn, n int) ([]VersionInfo, error) {
 
 func RemoveVersions(conn *pgx.Conn, n int) error {
 	_, err := conn.Exec(
-		context.Background(),
+		getTimeoutContext(),
 		"delete from versions where id>(select max(id)-$1 from versions)",
 		n,
 	)
