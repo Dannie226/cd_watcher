@@ -3,9 +3,11 @@ package email
 import (
 	"bytes"
 	"crypto/rand"
+	"crypto/tls"
 	"encoding/base64"
 	"fmt"
 	"math/big"
+	"net"
 	"time"
 
 	"github.com/Dannie226/cd_watcher/internal/config"
@@ -60,7 +62,27 @@ func (c *EmailClient) SendEmail(event config.EmailEvent, message string) error {
 		return nil
 	}
 
-	conn, err := smtp.DialStartTLS(c.cfg.Host, nil)
+	dialer := net.Dialer{
+		Timeout: 20 * time.Second,
+	}
+
+	nConn, err := dialer.Dial("tcp", c.cfg.Host)
+
+	if err != nil {
+		return fmt.Errorf("Failed to dial SMTP server: %w", err)
+	}
+
+	host, _, err := net.SplitHostPort(c.cfg.Host)
+
+	if err != nil {
+		return fmt.Errorf("Failed to split host and port: %w", err)
+	}
+
+	nConn.SetDeadline(time.Now().Add(20 * time.Second))
+
+	conn, err := smtp.NewClientStartTLS(nConn, &tls.Config{
+		ServerName: host,
+	})
 
 	if err != nil {
 		return fmt.Errorf("Failed to connect to SMTP server: %w", err)
@@ -73,6 +95,9 @@ func (c *EmailClient) SendEmail(event config.EmailEvent, message string) error {
 			conn.Close()
 		}
 	})()
+
+	conn.CommandTimeout = 20 * time.Second
+	conn.SubmissionTimeout = 20 * time.Second
 
 	err = conn.Auth(c.creds)
 
