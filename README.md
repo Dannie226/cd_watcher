@@ -176,7 +176,7 @@ There are 4 main events that you can listen to with emails:
  - Rollback finished (```"rollback_finish"```)
 
 Finish emails will reply to their corresponding start email, new start
-emails reply to the previous start email.<br>
+emails reply to the first start email.<br>
 If something went wrong (health check fail, other error) a finish email
 will still be sent, it will just say there was an error<br>
 
