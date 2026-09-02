@@ -18,12 +18,12 @@ func rollback(cfg *config.Config, client *email.EmailClient, n int) int {
 	var err error
 
 	if n == 1 {
-		err = client.SendEmail(config.RollbackStartEvent, "Starting server rollback")
+		err = client.SendEmail(config.RollbackStartEvent, "Starting service rollback")
 	} else {
 		client.SendEmail(
 			config.RollbackStartEvent,
 			fmt.Sprintf(
-				"Starting server rollback.\n Rolling back %d releases",
+				"Starting service rollback.\n Rolling back %d releases",
 				n,
 			),
 		)
@@ -37,7 +37,7 @@ func rollback(cfg *config.Config, client *email.EmailClient, n int) int {
 
 	if err != nil {
 		slog.Error("Failed to get rollback versions", "error", err)
-		err = client.SendEmail(config.RollbackFinishEvent, "Failed to rollback server")
+		err = client.SendEmail(config.RollbackFinishEvent, "Failed to rollback service")
 
 		if err != nil {
 			slog.Warn("Failed to send rollback fail email", "failure", "version", "error", err)
@@ -48,7 +48,7 @@ func rollback(cfg *config.Config, client *email.EmailClient, n int) int {
 
 	if len(versions) < 2 {
 		slog.Error("No version to rollback to", "version count", len(versions))
-		err = client.SendEmail(config.RollbackFinishEvent, "Failed to rollback server")
+		err = client.SendEmail(config.RollbackFinishEvent, "Failed to rollback service")
 
 		if err != nil {
 			slog.Warn("Failed to send rollback fail email", "failure", "too few versions", "error", err)
@@ -61,11 +61,11 @@ func rollback(cfg *config.Config, client *email.EmailClient, n int) int {
 		n = len(versions) - 1
 	}
 
-	err = release.SetupRelease(cfg.ReleaseDir, versions[n].FolderName, cfg.ReloadScript, cfg.HealthScript)
+	err = release.SetupRelease(cfg.ReleaseDir, versions[n].FolderName, cfg.StartScript, cfg.HealthScript)
 
 	if err != nil {
-		slog.Error("Failed to restart server to rolled back version", "error", err)
-		err = client.SendEmail(config.RollbackFinishEvent, "Failed to roll back server")
+		slog.Error("Failed to restart service to rolled back version", "error", err)
+		err = client.SendEmail(config.RollbackFinishEvent, "Failed to roll back service")
 
 		if err != nil {
 			slog.Warn("Failed to send rollback fail email", "failure", "restart", "error", err)
@@ -81,7 +81,7 @@ func rollback(cfg *config.Config, client *email.EmailClient, n int) int {
 
 		if err != nil {
 			slog.Error("Failed to remove previous releases", "error", err)
-			err = client.SendEmail(config.RollbackFinishEvent, "Failed to roll back server")
+			err = client.SendEmail(config.RollbackFinishEvent, "Failed to roll back service")
 
 			if err != nil {
 				slog.Warn("Failed to send rollback fail email", "failure", "fs remove", "error", err)
@@ -95,7 +95,7 @@ func rollback(cfg *config.Config, client *email.EmailClient, n int) int {
 
 	if err != nil {
 		slog.Error("Failed to remove releases from database", "error", err)
-		err = client.SendEmail(config.RollbackFinishEvent, "Failed to roll back server")
+		err = client.SendEmail(config.RollbackFinishEvent, "Failed to roll back service")
 
 		if err != nil {
 			slog.Warn("Failed to send rollback fail email", "failure", "db remove", "error", err)
@@ -104,7 +104,7 @@ func rollback(cfg *config.Config, client *email.EmailClient, n int) int {
 		return 1
 	}
 
-	err = client.SendEmail(config.RollbackFinishEvent, "Successfully Rolled back server")
+	err = client.SendEmail(config.RollbackFinishEvent, "Successfully Rolled back service")
 
 	if err != nil {
 		slog.Warn("Failed to send rollback success email", "error", err)

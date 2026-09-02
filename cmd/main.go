@@ -8,6 +8,7 @@ import (
 
 	"strconv"
 
+	"github.com/Dannie226/cd_watcher/internal/command"
 	"github.com/Dannie226/cd_watcher/internal/config"
 	"github.com/Dannie226/cd_watcher/internal/email"
 )
@@ -32,6 +33,18 @@ func main() {
 	if err != nil {
 		slog.Error("Failed to load config", "error", err)
 		os.Exit(1)
+	}
+
+	if cfg.StopScript != "" {
+		if err := command.RunCommand(
+			"/usr/bin/bash",
+			"",
+			"Stop",
+			cfg.StopScript,
+		); err != nil {
+			slog.Error("Failed to stop service", "error", err)
+			os.Exit(1)
+		}
 	}
 
 	var client *email.EmailClient

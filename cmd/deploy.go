@@ -60,7 +60,7 @@ func deploy(cfg *config.Config, client *email.EmailClient) int {
 	}
 
 	slog.Info("Setting up release", "final release", lastRelease)
-	err = release.SetupRelease(cfg.ReleaseDir, lastRelease, cfg.ReloadScript, cfg.HealthScript)
+	err = release.SetupRelease(cfg.ReleaseDir, lastRelease, cfg.StartScript, cfg.HealthScript)
 
 	if err != nil {
 		if errors.Is(err, release.RestartErr) {
@@ -98,7 +98,7 @@ func deploy(cfg *config.Config, client *email.EmailClient) int {
 		}
 
 		slog.Error("Failed to set up new release", "error", err)
-		err = client.SendEmail(config.DeployFinishEvent, "Failed to restart server")
+		err = client.SendEmail(config.DeployFinishEvent, "Failed to restart service")
 
 		if err != nil {
 			slog.Warn("Failed to send deploy restart email", "error", err)
@@ -107,7 +107,7 @@ func deploy(cfg *config.Config, client *email.EmailClient) int {
 		return 1
 	}
 
-	err = client.SendEmail(config.DeployFinishEvent, "Deployed new server")
+	err = client.SendEmail(config.DeployFinishEvent, "Deployed new service")
 
 	return 0
 }
