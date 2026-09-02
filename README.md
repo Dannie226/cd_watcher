@@ -28,7 +28,7 @@ each bundle it finds.<br>
 This unpack script gets run with the path to the bundle as the first argument.
 It also sets the working directory to the created release directory, so you
 can unpack the bundle here in the current directory.<br>
-After the unpack script runs, the symlink for the currently deployed server gets
+After the unpack script runs, the symlink for the currently deployed service gets
 updated.
 
 If multiple bundles are found, the unpack script is run in the order the Go standard
@@ -45,7 +45,7 @@ code not equal to 0), then a rollback will automatically occur.
 To run a rollback, just run ```cd_watcher rollback [number]```<br>
 This rolls back a specific number of versions, if previous versions exist
 and clears entries in the releases directory and database, updates the symlink
-for the currently deployed server, and then restarts and health checks the server.<br>
+for the currently deployed service, and then restarts and health checks the service.<br>
 If there aren't enough versions to roll back through, it will roll back as many as it
 can. So, if you have 5 versions, and run rollback 10, it will rollback 4 versions.
 
@@ -139,10 +139,15 @@ Where the bundles are going to be deployed to. Default: ```"uploads"```
 The script to run to unpack the bundle. Default: ```"scripts/unpack.sh"```
 Note: Will be run with its first argument being the path to the bundle
 
-#### Reload Script
+#### Stop Script
+```"stop"```<br>
+The script to run to stop the currently running service. Default: ```""```
+Note: An empty string means that a stop script shouldn't be run
 
-```"reload"```<br>
-The script to run to reload the service. Default ```"scripts/reload.sh"```
+#### Start Script
+
+```"start"```<br>
+The script to run to start the service. Default ```"scripts/start.sh"```
 
 #### Health Check Script
 

@@ -94,7 +94,7 @@ func LoadConfig() (*Config, error) {
 		ReleaseDir:   "releases",
 		UploadDir:    "uploads",
 		UnpackScript: "scripts/unpack.sh",
-		ReloadScript: "scripts/reload.sh",
+		StartScript:  "scripts/start.sh",
 	}
 
 	data, err := os.ReadFile("config.json")
@@ -109,7 +109,7 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("Failed to unmarshal config: %w", err)
 	}
 
-	credDir, ok := os.LookupEnv("CREDENTIALS_DIR")
+	credDir, ok := os.LookupEnv("CREDENTIALS_DIRECTORY")
 
 	if !ok {
 		return nil, fmt.Errorf("No credentials directory environment variable")

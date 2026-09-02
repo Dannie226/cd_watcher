@@ -9,7 +9,8 @@ type Config struct {
 	ReleaseDir   string       `json:"release_dir"`
 	UploadDir    string       `json:"upload_dir"`
 	UnpackScript string       `json:"unpack"`
-	ReloadScript string       `json:"reload"`
+	StopScript   string       `json:"stop"`
+	StartScript  string       `json:"start"`
 	HealthScript string       `json:"health_check"`
 	EmailConfig  *EmailConfig `json:"email_conf"`
 	EmailLogin   sasl.Client  `json:"-"`
