@@ -4,7 +4,7 @@ A single binary for performing the CD part of a CI/CD pipeline
 ## Dependencies
 
 This depends on systemd credentials, and must be installed as a systemd service.
-There is are a pair of provided systemd service files, one for deploy, one for
+There are a pair of provided systemd service files, one for deploy, one for
 rollback.
 
 This also depends on having a PostgreSQL database for storing versioning information.
