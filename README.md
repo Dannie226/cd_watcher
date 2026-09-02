@@ -108,13 +108,18 @@ These credentials will be read using two environment variables:
 You shouldn't put the credential directory in front, that will be appended in the
 program itself.<br>
 If the environment variables are empty (or unset), it will assume that the credentials
-are just named 'pg_url' and 'email_login'<br>
+are just named 'pg_url', 'email_login'<br>
 
 You might ask "Why put the credential name in an environment variable?"<br>
 Great Question. Because the way systemd works is that when you create the credential,
 it puts an ID with that credential. But, you might want to put a file extension with
 the credential, which will then mess with the ID. So, you get to decide the ID and other
 stuff and just tell the program which file to read.<br>
+
+Note: If you want to access other information inside the user scripts, then you can
+either add it as a credential or you can add it as an environment variable in the
+unit file. You can still access the credentials directory environment variable and
+because the scripts are being run as the watcher user you have the same access control
 
 ### JSON
 
