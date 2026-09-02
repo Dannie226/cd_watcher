@@ -21,13 +21,14 @@ Finally, perform all the configuration steps set forth in the following section.
 Most of the configuration steps have sensible defaults, but many things don't,
 so make sure you set those up.
 
-To run a deploy, push a bundle up to the configured deploy directory, and then run
-```cd_watcher deploy```.<br>
+To run a deploy, push a bundle up to the configured deploy directory, and then run the systemd
+service that runs the deploy.<br>
+First, this runs the stop script if you have configured for there to be one.<br>
 This scans the upload directory for any bundles, and runs the unpack script for
 each bundle it finds.<br>
 This unpack script gets run with the path to the bundle as the first argument.
 It also sets the working directory to the created release directory, so you
-can unpack the bundle here in the current directory.<br>
+can unpack the bundle there in the current directory.<br>
 After the unpack script runs, the symlink for the currently deployed service gets
 updated.
 
@@ -36,18 +37,20 @@ library returns the bundles in, but only the last one updates the symlink and ge
 the restart and health check.
 
 It then runs two user supplied scripts:
- - Restart
+ - Start
  - Health Check (optional)
 
 If either the health check script or the restart script returns an error code (exit
 code not equal to 0), then a rollback will automatically occur.
 
-To run a rollback, just run ```cd_watcher rollback [number]```<br>
-This rolls back a specific number of versions, if previous versions exist
-and clears entries in the releases directory and database, updates the symlink
+To run a rollback, just run the systemd service for rolling back your service.<br>
+Usually, you will only want to run this to roll back one version, however the option
+exists to roll back multiple versions.<br>
+This stops the service, rolls back a specific number of versions, if previous versions
+exist and clears entries in the releases directory and database, updates the symlink
 for the currently deployed service, and then restarts and health checks the service.<br>
 If there aren't enough versions to roll back through, it will roll back as many as it
-can. So, if you have 5 versions, and run rollback 10, it will rollback 4 versions.
+can. So, if you have 5 versions, and run rollback 10, it will roll back 4 versions.
 
 ## Examples
 
@@ -59,7 +62,7 @@ There are a few user defined scripts for this project that makes it nice and
 configurable, but there are a few restrictions for the scripts.
 
 1. All scripts are run using ```/usr/bin/bash```
-2. Keep script lines short. If output lines are excessively long, the entirety of
+2. Keep script output lines short. If output lines are excessively long, the entirety of
 the command output could be thrown away
 3. Script stdout and stderr is logged for revisiting if things break. Don't output
 credentials or anything you wish to keep secret
